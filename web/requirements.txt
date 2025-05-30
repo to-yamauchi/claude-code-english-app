@@ -1,8 +1,0 @@
-Flask==3.0.0
-Flask-SocketIO==5.3.6
-python-socketio==5.10.0
-python-dotenv==1.0.0
-gunicorn==21.2.0
-# Note: google-genai and certbot will be added in Phase 2
-# google-genai==0.3.0
-# certbot==2.7.4
