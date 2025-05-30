@@ -6,6 +6,7 @@ Phase 1: Basic foundation with Flask-SocketIO and basic UI
 
 import os
 import ssl
+import argparse
 from flask import Flask, render_template, jsonify, request
 from flask_socketio import SocketIO, emit
 from datetime import datetime
@@ -182,8 +183,28 @@ def create_self_signed_cert():
     return cert_file, key_file
 
 if __name__ == '__main__':
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='English Learning Voice Assistant Web Application')
+    parser.add_argument('--port', '-p', type=int, 
+                        help='Port number to run the server on')
+    parser.add_argument('--host', type=str, default='0.0.0.0',
+                        help='Host address to bind to (default: 0.0.0.0)')
+    args = parser.parse_args()
+    
     # Check if running in production or development
     is_production = os.environ.get('FLASK_ENV') == 'production'
+    
+    # Determine port number
+    # Priority: 1. Command line argument, 2. Environment variable, 3. Default
+    if args.port:
+        port = args.port
+    elif os.environ.get('PORT'):
+        port = int(os.environ.get('PORT'))
+    else:
+        # Default ports
+        port = 443 if is_production else 5000
+    
+    logger.info(f"Starting server on port {port}")
     
     if is_production:
         # Production: Use proper SSL certificates
@@ -194,10 +215,10 @@ if __name__ == '__main__':
         if os.path.exists(cert_file) and os.path.exists(key_file):
             context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
             context.load_cert_chain(cert_file, key_file)
-            socketio.run(app, host='0.0.0.0', port=443, ssl_context=context)
+            socketio.run(app, host=args.host, port=port, ssl_context=context)
         else:
             logger.error("SSL certificates not found. Please set up Let's Encrypt certificates.")
-            socketio.run(app, host='0.0.0.0', port=5000, debug=False)
+            socketio.run(app, host=args.host, port=port, debug=False)
     else:
         # Development: Use self-signed certificate or HTTP
         logger.info("Running in development mode")
@@ -206,7 +227,7 @@ if __name__ == '__main__':
         if cert_file and key_file:
             context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
             context.load_cert_chain(cert_file, key_file)
-            socketio.run(app, host='0.0.0.0', port=5000, ssl_context=context, debug=True)
+            socketio.run(app, host=args.host, port=port, ssl_context=context, debug=True)
         else:
             # Fall back to HTTP
-            socketio.run(app, host='0.0.0.0', port=5000, debug=True)
+            socketio.run(app, host=args.host, port=port, debug=True)
